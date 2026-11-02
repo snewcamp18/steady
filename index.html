@@ -109,6 +109,20 @@
   details[open].card summary::after { transform: rotate(90deg); }
   summary div { display: flex; flex-direction: column; }
   .empty { text-align: center; padding: 24px 8px; }
+  .tag { font-size: 12px; color: var(--hot); font-weight: 600; }
+  details.how summary { cursor: pointer; color: var(--muted); font-size: 14px; text-decoration: underline; }
+  .howto { list-style: none; padding: 0; margin: 8px 0 0; font-size: 14px; }
+  .howto li { padding: 6px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+  .howto li:last-child { border-bottom: 0; }
+  .howto b { display: block; color: var(--text); }
+  .ladder { list-style: none; padding: 0; margin: 0; counter-reset: lv; }
+  .ladder li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0 8px 32px; border-bottom: 1px solid var(--line); position: relative; color: var(--muted); }
+  .ladder li:last-child { border-bottom: 0; }
+  .ladder li::before { counter-increment: lv; content: counter(lv); position: absolute; left: 0; top: 7px; width: 22px; height: 22px; border-radius: 50%; background: var(--card2); font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+  .ladder li.done { color: var(--text); }
+  .ladder li.done::before { content: "✓"; background: var(--soft); color: var(--accent); }
+  .ladder li.cur { color: var(--accent); font-weight: 700; }
+  .ladder li.cur::before { background: var(--accent); color: var(--accent-ink); }
 
   #sheet { position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
   #sheet .scrim { position: absolute; inset: 0; background: #000a; }
@@ -166,8 +180,7 @@ const distUnit = () => D.settings.unit === 'kg' ? 'km' : 'mi';
 const SESSIONS = {
   pt: { kind: 'log', preset: 'PT exercises (Embodia)', icon: '🩺', name: 'PT exercises', sub: 'Your Embodia program', min: 15, link: EMBODIA, cta: 'Mark as done',
     about: ['Open Embodia and do today’s exercises', 'Breathe out on the effort, don’t hold your breath', 'Come back here and mark it done'] },
-  pilates: { kind: 'log', preset: 'Pilates', icon: '🧘', name: 'Pilates', sub: 'Class, reformer or mat at home', min: 45, cta: 'Log Pilates',
-    about: ['Tell your instructor about your PT plan', 'Skip or modify anything your PT has flagged', 'Log it here when you’re done'] },
+  pilates: { kind: 'log', preset: 'Pilates', icon: '🧘', name: 'Pilates', sub: '20-minute mat routine', min: 20, cta: 'Log Pilates' },
   walk: { kind: 'timed', icon: '🚶', name: 'Easy walk', sub: 'Steady and conversational', cta: 'Start',
     about: ['5 min easy warm-up', '20 min steady — you can still chat', '5 min easy cool-down'],
     steps: [{ n: 'Easy pace — warm up', s: 300, t: 'Loosen up. Stand tall and breathe normally.' },
@@ -183,7 +196,7 @@ const SCHEDULE = [null, 'pilates', 'walk', 'pilates', 'walk', 'pilates', 'walk']
 const SLOT = { pt: '🩺 Physio', move: '🌿 Movement' };
 const ACTIVITIES = ['PT exercises (Embodia)', 'Pilates', 'Walk', 'Stationary bike', 'Swim', 'Water walking', 'Elliptical', 'Easy hike', 'Other'];
 const ACT_ICON = { 'PT exercises (Embodia)': '🩺', Pilates: '🧘', Walk: '🚶', 'Stationary bike': '🚴', Swim: '🏊', 'Water walking': '💧', Elliptical: '🌀', 'Easy hike': '🥾' };
-const DEFAULT_MIN = { 'PT exercises (Embodia)': 15, Pilates: 45 };
+const DEFAULT_MIN = { 'PT exercises (Embodia)': 15, Pilates: 20 };
 const kindOf = a => a === ACTIVITIES[0] ? 'pt' : a === 'Pilates' ? 'pilates' : 'cardio';
 const catOf = w => w.kind === 'pt' || w.kind === 'pilates' ? w.kind : 'cardio';   // guided walks count as cardio
 const FEEL = [['😌', 'None'], ['🙂', 'Slight'], ['😐', 'Noticeable'], ['😣', 'Strong'], ['😖', 'Painful']];
@@ -199,8 +212,73 @@ const TIPS = [
 ];
 const minsOf = s => s.kind === 'timed' ? Math.round(s.steps.reduce((n, x) => n + x.s, 0) / 60) : s.min;
 
+/* ---------- Pilates levels ----------
+ * Four 20-minute mat routines that follow the beginner → intermediate → advanced progression of Move With Nicole's classes
+ * (https://www.youtube.com/@MoveWithNicole). `q` searches her channel for a matching class. Each move is
+ * [name, amount, how-to, askPT]; askPT marks moves that put more load through the core and pelvic floor.
+ * After PER_LEVEL logged sessions at a level the app offers the next one. */
+const CHANNEL = 'https://www.youtube.com/@MoveWithNicole';
+const PER_LEVEL = 6;
+const PILATES = [
+  { name: 'Foundations', q: '20 minute beginner', ex: [
+    ['Ribcage breathing', '2 min', 'Hands on your lower ribs. Breathe wide into your hands, then out slowly. Let your belly stay soft.'],
+    ['Pelvic tilts', '10 reps', 'Knees bent. Breathe out as you gently flatten your lower back, in as you release.'],
+    ['Cat-cow', '8 reps', 'On hands and knees. Round your back as you breathe out, lengthen as you breathe in.'],
+    ['Heel slides', '8 each side', 'Slide one heel away along the floor and back, keeping your pelvis still.'],
+    ['Bridge', '8 reps', 'Peel up one bone at a time as you breathe out, roll down slowly.'],
+    ['Clam shells', '10 each side', 'Side-lying, knees bent and feet together. Open the top knee without rocking your hips back.'],
+    ['Side-lying leg lifts', '10 each side', 'Hips stacked. Lift the top leg to hip height with control, lower slowly.'],
+    ['Dead bug toe taps', '8 each side', 'Knees over hips. Tap one toe down at a time and keep your back steady.'],
+    ['Bird dog', '8 each side', 'Reach opposite arm and leg long while your hips stay level.'],
+    ['Seated spine twist', '6 each side', 'Sit tall and rotate from your ribs, breathing out as you turn.'],
+    ['Child’s pose', '1 min', 'Hips back toward your heels. Long, slow breaths to finish.']] },
+  { name: 'Building', q: '20 minute pilates', ex: [
+    ['Breathing & pelvic tilts', '2 min', 'Warm up your breath and your lower back before you start.'],
+    ['Bridge with march', '8 each side', 'Hold the bridge and lift one foot at a time. Keep your hips level.'],
+    ['Single leg circles', '6 each way, each side', 'On your back, one leg up. Small circles, with your pelvis still.'],
+    ['Side-lying leg series', '10 each side', 'Front, back and small circles with the top leg. Keep your waist long.'],
+    ['Clam shells with hover', '12 each side', 'Lift the bottom leg slightly off the floor as you open the top knee.'],
+    ['Dead bug', '10 each side', 'Lower the opposite arm and leg together, only as far as your back stays steady.'],
+    ['Bird dog with reach', '10 each side', 'Slow reach out, then draw the elbow and knee in toward each other.'],
+    ['Swan prep', '6 reps', 'Face down, forearms on the mat. Lengthen and lift your chest a little, then lower.'],
+    ['Side plank from knees', '20 s each side', 'Knees bent, hips lifted, shoulders away from your ears.'],
+    ['Spine stretch forward', '6 reps', 'Sit tall, legs apart. Round forward over a big ball of air, then stack back up.'],
+    ['Mermaid side stretch', '5 each side', 'Sit sideways on your hips and reach up and over, lengthening the side of your waist.'],
+    ['Child’s pose', '1 min', 'Slow breathing to finish.']] },
+  { name: 'Strengthening', q: '20 minute intermediate', ex: [
+    ['Breathing & pelvic tilts', '2 min', 'Warm up your breath and your lower back before you start.'],
+    ['Roll-down', '6 reps', 'Standing. Nod your chin and roll down one bone at a time, then stack back up.'],
+    ['Bridge with leg extension', '8 each side', 'Hold the bridge and straighten one knee, keeping your hips level.'],
+    ['Single leg stretch', '8 each side', 'Knees in tabletop, head down. Switch legs smoothly and breathe out as you switch.', true],
+    ['The hundred (modified)', '5 breaths', 'Knees bent at tabletop, head down. Pump your arms and breathe steadily.', true],
+    ['Single leg circles', '8 each way, each side', 'Larger circles, with your pelvis still.'],
+    ['Side-lying leg series', '12 each side', 'Front, back, circles and lifts. Stay long through the waist.'],
+    ['Swimming', '30 s', 'Face down. Reach opposite arm and leg and lift them lightly, alternating.'],
+    ['Plank', '20–30 s', 'Start on your knees if you need to. Keep one long line from head to hips.', true],
+    ['Side plank', '25 s each side', 'Stack your feet or stagger them. Lift tall through your waist.', true],
+    ['Saw', '6 each side', 'Sit tall, twist, and reach past your little toe, breathing out.'],
+    ['Child’s pose', '1 min', 'Slow breathing to finish.']] },
+  { name: 'Flow', q: '20 minute advanced', ex: [
+    ['Breathing & pelvic tilts', '1 min', 'A short warm-up for your breath.'],
+    ['Roll-up', '6 reps', 'Roll up and over your legs with control. Use your hands behind your thighs if you need support.', true],
+    ['Single leg stretch', '10 each side', 'Smooth switches, breathing out as you switch.', true],
+    ['Double leg stretch', '8 reps', 'Reach out long, then circle the arms around and draw your knees in.', true],
+    ['Criss-cross', '10 each side', 'Rotate from your ribs, not your neck.', true],
+    ['Teaser prep', '6 reps', 'Roll up to a balance on your sit bones with knees bent, then roll down.', true],
+    ['Swan', '6 reps', 'Lift your chest, keeping your legs long and your neck relaxed.'],
+    ['Swimming', '45 s', 'Reach opposite arm and leg and lift them, alternating with steady breath.'],
+    ['Plank', '40 s', 'One long line, shoulders over wrists.', true],
+    ['Side plank with leg lift', '8 each side', 'Lift the top leg while your waist stays long.', true],
+    ['Side kick series', '12 each side', 'Front and back kicks with a still torso.'],
+    ['Child’s pose', '1 min', 'Slow breathing to finish.']] }
+];
+const pilatesLevel = () => Math.min(D.pil.level, PILATES.length - 1);
+const levelCount = () => D.workouts.filter(w => w.kind === 'pilates' && (w.level ?? 0) === pilatesLevel()).length;
+const levelReady = () => pilatesLevel() < PILATES.length - 1 && levelCount() >= PER_LEVEL && levelCount() >= D.pil.hold;
+const pilatesLink = () => `${CHANNEL}/search?query=${encodeURIComponent(PILATES[pilatesLevel()].q)}`;
+
 /* ---------- storage ---------- */
-const defaults = () => ({ onboarded: false, settings: { unit: 'lb', goalPt: 7, goalPilates: 2, goalCardio: 2 }, workouts: [], weights: [], checkins: [] });
+const defaults = () => ({ onboarded: false, settings: { unit: 'lb', goalPt: 7, goalPilates: 2, goalCardio: 2 }, workouts: [], weights: [], checkins: [], pil: { level: 0, hold: 0 } });
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
@@ -299,14 +377,24 @@ function slotCard(slot, sid) {
   const label = SLOT[slot];
   if (!sid) return `<section class="card"><p class="eyebrow">${label}</p><h2>Rest day</h2><p class="muted small">Rest is part of the plan. A gentle stroll is fine if you feel like it.</p><button class="link" data-act="swap" data-slot="${slot}">Move anyway</button></section>`;
   const s = SESSIONS[sid], done = D.workouts.some(w => w.date === ymd() && w.slot === slot);
+  const link = sid === 'pilates' ? { href: pilatesLink(), label: 'Watch a 20-min class on YouTube ↗' } : s.link ? { href: s.link, label: 'Open Embodia ↗' } : null;
   return `<section class="card slot ${done ? 'isdone' : ''}">
     <div class="exhead"><p class="eyebrow">${label} · ~${minsOf(s)} min</p>${done ? '<span class="donetag">✓ Done</span>' : ''}</div>
     <h2>${s.icon} ${esc(s.name)}</h2><p class="muted small">${esc(s.sub)}</p>
-    <ul class="plan">${s.about.map(a => `<li><span>${esc(a)}</span></li>`).join('')}</ul>
-    ${s.link && !done ? `<a class="btn ghost wide" href="${s.link}" target="_blank" rel="noopener">Open Embodia ↗</a>` : ''}
+    ${sid === 'pilates' ? pilatesBlock() : `<ul class="plan">${s.about.map(a => `<li><span>${esc(a)}</span></li>`).join('')}</ul>`}
+    ${link && !done ? `<a class="btn ghost wide" href="${link.href}" target="_blank" rel="noopener">${link.label}</a>` : ''}
     ${done ? '' : `<button class="primary wide" data-act="begin" data-sid="${sid}" data-slot="${slot}">${s.cta}</button>`}
     ${slot === 'move' ? `<button class="link" data-act="swap" data-slot="${slot}">${done ? 'Do another session' : 'Swap for another session'}</button>` : ''}
   </section>`;
+}
+function pilatesBlock() {
+  const lv = pilatesLevel(), L = PILATES[lv], n = levelCount(), next = PILATES[lv + 1];
+  return `<p class="muted small">Level ${lv + 1} of ${PILATES.length} · ${esc(L.name)}${next ? ` · ${Math.min(n, PER_LEVEL)}/${PER_LEVEL} sessions to level up` : ''}</p>
+    <ul class="plan">${L.ex.map(([name, amt, , ask]) => `<li><span>${esc(name)}${ask ? ' <span class="tag">ask PT</span>' : ''}</span><span class="muted">${esc(amt)}</span></li>`).join('')}</ul>
+    <details class="how"><summary>How to do each move</summary><ul class="howto">${L.ex.map(([name, , how]) => `<li><b>${esc(name)}</b>${esc(how)}</li>`).join('')}</ul></details>
+    <p class="muted small">Breathe out on the effort. Skip or modify anything your PT has flagged, and stop if something doesn’t feel right.</p>
+    ${levelReady() ? `<div class="banner">🎉 ${n} sessions done at Level ${lv + 1}. Ready for Level ${lv + 2} (${esc(next.name)})?${next.ex.some(e => e[3]) ? ' It adds moves marked “ask PT”, so check with your PT first if you’re unsure.' : ''}
+      <div class="row" style="margin-top:8px"><button class="primary small" data-act="levelup">Move up</button><button class="ghost small" data-act="levelhold">Not yet</button></div></div>` : ''}`;
 }
 function goalRow(label, n, goal) {
   const dots = Array.from({ length: Math.max(goal, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
@@ -497,7 +585,12 @@ function progressHTML() {
     <div class="stat"><b>${thisMonth.filter(w => catOf(w) === 'cardio').reduce((n, w) => n + minutes(w), 0)}</b><span class="muted small">cardio minutes this month</span></div>
   </div>
   <section class="card">
-    <div class="exhead"><h2>Comfort</h2><span class="muted small">${ck.length ? `latest: ${FEEL[ck.at(-1).v - 1][1].toLowerCase()}` : ''}</span></div>
+    <div class="exhead"><h2>🧘 Pilates levels</h2><span class="muted small">${levelCount()}/${PER_LEVEL} at this level</span></div>
+    <ol class="ladder">${PILATES.map((L, i) => `<li class="${i < pilatesLevel() ? 'done' : i === pilatesLevel() ? 'cur' : ''}"><span>${esc(L.name)}</span><span class="small">${L.ex.length} moves</span></li>`).join('')}</ol>
+    <p class="muted small">After ${PER_LEVEL} sessions at a level, Steady offers the next one. You can also change level in Settings.</p>
+  </section>
+  <section class="card">
+    <div class="exhead"><h2>Comfort</h2></h2><span class="muted small">${ck.length ? `latest: ${FEEL[ck.at(-1).v - 1][1].toLowerCase()}` : ''}</span></div>
     <p class="muted small">1 = none, 5 = painful. Lower is better. Worth showing to your PT.</p>
     ${ck.length ? lineChart(ck.map(c => ({ x: parseYmd(c.date).getTime(), y: c.v })), 'Discomfort over time', [1, 5]) : '<p class="muted small empty">You’ll be asked after each session, or tap Check in on the Today screen.</p>'}
     <button class="ghost wide" data-act="checkinNow">Check in now</button>
@@ -528,6 +621,7 @@ function settingsHTML() {
   <section class="card">
     <label class="field" style="margin-top:0">Physio days<select data-set="goalPt">${[3, 4, 5, 6, 7].map(n => opt(n, `${n} days a week`, s.goalPt)).join('')}</select></label>
     <label class="field">Pilates<select data-set="goalPilates">${[1, 2, 3, 4].map(n => opt(n, plural(n, 'session'), s.goalPilates)).join('')}</select></label>
+    <label class="field">Pilates level<select data-set="pilLevel">${PILATES.map((L, i) => opt(i, `Level ${i + 1} · ${L.name}`, pilatesLevel())).join('')}</select></label>
     <label class="field">Light cardio<select data-set="goalCardio">${[1, 2, 3, 4, 5].map(n => opt(n, plural(n, 'session'), s.goalCardio)).join('')}</select></label>
     <label class="field">Units<select data-set="unit">${opt('lb', 'Pounds & miles', s.unit)}${opt('kg', 'Kilograms & km', s.unit)}</select></label>
   </section>
@@ -539,7 +633,7 @@ function settingsHTML() {
   <section class="card">
     <h2>How it works</h2>
     <p class="muted small"><b>Physio</b> happens in Embodia. Do your exercises there, then tap <i>Mark as done</i> here to keep your streak. Steady doesn’t replace your PT’s program.</p>
-    <p class="muted small"><b>Pilates</b> two or three times a week. Tell your instructor about your PT plan, and ask your PT which exercises to skip or modify.</p>
+    <p class="muted small"><b>Pilates</b> is a 20-minute mat routine two or three times a week, in four levels that follow the beginner to advanced progression of the Move With Nicole classes on YouTube. Each level links to the channel’s classes for that level. Moves marked “ask PT” put more load through your core, so check with your PT before doing them, and skip or modify anything they’ve flagged.</p>
     <p class="muted small"><b>Light cardio</b> means low-impact options: walking, stationary bike, swimming, water walking or the elliptical, with no jumping or running. Keep a pace where you can chat, and ease off if you notice more discomfort. Ask your PT what’s right at each stage.</p>
     <p class="muted small"><b>Check-ins</b> record how comfortable you feel so you and your PT can see how things trend as you exercise.</p>
     <p class="muted small">Steady is a tracker, not medical advice. If symptoms get worse or you have pain, let your PT know.</p>
@@ -590,10 +684,12 @@ const actions = {
   saveActivity(el) {
     const act = $('#cKind').value, kind = kindOf(act), mins = parseInt($('#cMin').value), date = $('#cDate').value || ymd(), dist = num($('#cDist').value);
     if (!(mins > 0)) { toast('Enter how many minutes'); return }
-    addWorkout({ id: uid(), kind, at: atFor(date), date, slot: date === ymd() && el.dataset.slot || null, activity: act, minutes: mins, distance: kind === 'cardio' && dist > 0 ? r1(dist) : null });
+    addWorkout({ id: uid(), kind, at: atFor(date), date, slot: date === ymd() && el.dataset.slot || null, activity: act, minutes: mins, level: kind === 'pilates' ? pilatesLevel() : null, distance: kind === 'cardio' && dist > 0 ? r1(dist) : null });
     save(); closeSheet(); render();
-    if (date === ymd()) afterSession(`${mins} min · ${act}`); else toast('Logged 👍');
+    if (date === ymd()) afterSession(`${mins} min · ${act}${kind === 'pilates' && levelReady() ? ' · Ready for the next level? See Today' : ''}`); else toast('Logged 👍');
   },
+  levelup() { D.pil = { level: pilatesLevel() + 1, hold: 0 }; save(); render(); toast(`Level ${D.pil.level + 1}: ${PILATES[D.pil.level].name}`) },
+  levelhold() { D.pil.hold = levelCount() + 2; save(); render() },
   weight() { weightSheet() },
   saveWeight() {
     const v = num($('#wVal').value), date = $('#wDate').value || ymd();
@@ -633,6 +729,7 @@ document.addEventListener('change', e => {
     return;
   }
   const k = el.dataset.set; if (!k) return;
+  if (k === 'pilLevel') { D.pil = { level: +el.value, hold: 0 }; save(); render(); toast('Saved'); return }
   const v = k === 'unit' ? el.value : +el.value;
   if (k === 'unit' && v !== D.settings.unit) convertUnits(v);
   D.settings[k] = v; save(); render(); toast('Saved');

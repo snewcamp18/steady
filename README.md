@@ -7,7 +7,11 @@ got done, keeps a streak and tracks how things feel over time.
 What's in it:
 
 - **Daily physio** card with an *Open Embodia* link and a *Mark as done* log. Streak counts consecutive days.
-- **Pilates** 2–3 times a week (Mon/Wed/Fri suggested): logs a class, reformer or mat session.
+- **Pilates** 2–3 times a week (Mon/Wed/Fri suggested): a 20-minute mat routine in four levels (Foundations, Building,
+  Strengthening, Flow) that follow the beginner to advanced progression of the Move With Nicole classes on YouTube. The
+  Today card lists the level's moves with a how-to for each and a link to the channel's classes for that level. After 6
+  sessions at a level the app offers the next one (or change it in Settings). Moves that load the core harder are tagged
+  "ask PT". The exercise lists are in the `PILATES` array in `index.html`.
 - **Light cardio** on the other days: a guided easy walk (5 min warm-up, 20 min conversational pace, 5 min cool-down)
   with a timer, or log a bike, swim, water walk or elliptical session. Low impact only, no running or jumping.
 - **Check-in** (comfort, 1–5) offered after sessions and on the Today screen, charted on Progress so it can
