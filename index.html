@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#131216">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Steady">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Steady</title>
+<style>
+  :root {
+    --bg: #131216; --card: #1c1a21; --card2: #25222c; --line: #302c38;
+    --text: #f1eef5; --muted: #9b94a6; --accent: #b9a4ff; --accent-ink: #1d1540; --soft: #2a2146; --hot: #ffb36b; --danger: #ff6b8a;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 96px); }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 0; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; }
+  .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 8px 0 16px; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .card > * + * { margin-top: 10px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .two .field { margin: 0; }
+  .two:has(#cDistWrap[hidden]) { grid-template-columns: 1fr; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row.end { justify-content: flex-end; }
+  button, a.btn { font: inherit; color: inherit; border: 0; border-radius: 12px; padding: 12px 16px; background: var(--card2); cursor: pointer; }
+  a.btn { display: block; text-align: center; text-decoration: none; }
+  button:active { transform: scale(.98); }
+  .primary { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .ghost { background: transparent; border: 1px solid var(--line); }
+  .danger { background: transparent; color: var(--danger); border: 1px solid #5a2d3c; }
+  .link { background: none; color: var(--muted); padding: 8px 0; text-decoration: underline; font-size: 14px; }
+  .wide { width: 100%; display: block; margin-top: 12px; }
+  button.small { padding: 8px 12px; font-size: 14px; }
+  .tile { text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 16px; border-radius: 16px; background: var(--card); }
+  input, select { font: inherit; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .field { display: block; font-size: 14px; color: var(--muted); margin-top: 12px; }
+  .field input, .field select { margin-top: 4px; }
+
+  .dots { display: flex; gap: 4px; }
+  .dots i { flex: 1; max-width: 22px; height: 8px; border-radius: 4px; background: var(--card2); }
+  .dots i.on { background: var(--accent); }
+  .goal { display: grid; grid-template-columns: 76px 1fr 44px; gap: 10px; align-items: center; }
+  .goal b { text-align: right; }
+  .chip { background: var(--card2); border-radius: 999px; padding: 4px 10px; font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .plan { list-style: none; padding: 0; margin: 10px 0 0; }
+  .plan li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .plan li:last-child { border-bottom: 0; }
+  .banner { background: var(--soft); color: var(--accent); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-weight: 600; }
+  .slot.isdone { opacity: .75; }
+  .donetag { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .exhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+
+  .player { text-align: center; border: 2px solid transparent; }
+  .pstep { font-size: 26px; }
+  .ptime { font-size: 76px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; margin-top: 14px !important; }
+  .bigclock { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 4px; }
+  .bigclock span { font-size: 15px; font-weight: 500; color: var(--muted); }
+  .pbar { height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+  .pbar i { display: block; height: 100%; background: var(--accent); width: 0; }
+  .pctl { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 8px; margin-top: 16px !important; }
+  .pctl button { font-size: 18px; padding: 16px; }
+  .steps { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+  .steps li { display: flex; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid var(--line); color: var(--muted); }
+  .steps li.cur { color: var(--accent); font-weight: 700; }
+  .steps li.past { opacity: .5; }
+
+  nav#tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; background: #131216f2; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 6; }
+  nav#tabs .in { display: flex; width: 100%; max-width: 560px; }
+  nav#tabs button { flex: 1; background: none; border-radius: 0; padding: 8px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); }
+  nav#tabs button.on { color: var(--accent); }
+  nav#tabs svg { width: 24px; height: 24px; }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .stat { background: var(--card); border-radius: 16px; padding: 14px 16px; }
+  .stat b { display: block; font-size: 26px; font-weight: 800; }
+  .chart { width: 100%; height: auto; display: block; }
+  .chart text { fill: var(--muted); font-size: 10px; }
+  .entries { list-style: none; padding: 0; margin: 0; }
+  .entries li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .entries li:last-child { border-bottom: 0; }
+  .x { background: none; color: var(--muted); padding: 4px 10px; font-size: 18px; }
+  .feel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 16px !important; }
+  .feel button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 2px; font-size: 11px; }
+  .feel button b { font-size: 26px; }
+  .sched td { padding: 6px 4px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; }
+  .sched { width: 100%; border-collapse: collapse; }
+  .sched td:first-child { color: var(--muted); font-weight: 600; width: 44px; }
+
+  .weekhead { font-size: 13px; color: var(--muted); font-weight: 600; margin: 18px 4px 8px; }
+  details.card summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  details.card summary::-webkit-details-marker { display: none; }
+  details.card summary::after { content: "›"; color: var(--muted); font-size: 22px; transition: transform .2s; }
+  details[open].card summary::after { transform: rotate(90deg); }
+  summary div { display: flex; flex-direction: column; }
+  .empty { text-align: center; padding: 24px 8px; }
+
+  #sheet { position: fixed; inset: 0; z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+  #sheet .scrim { position: absolute; inset: 0; background: #000a; }
+  #sheetBox { position: relative; width: 100%; max-width: 560px; max-height: 90vh; overflow: auto; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px 16px calc(env(safe-area-inset-bottom) + 20px); }
+  #sheetBox .row.end { margin-top: 20px; }
+  .pick { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left; margin-top: 8px; }
+  #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); transform: translate(-50%, -120px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 600; transition: transform .25s; z-index: 20; max-width: calc(100% - 32px); }
+  #toast.show { transform: translate(-50%, 0); }
+
+  .onboard { padding-top: 24px; }
+  .onboard .logo { width: 64px; height: 64px; margin-bottom: 16px; }
+  .onboard > p { margin: 10px 0 20px; }
+  .celebrate { text-align: center; }
+  .celebrate > * + * { margin-top: 8px; }
+  .celebrate .emoji { font-size: 56px; }
+  .celebrate h2 { font-size: 24px; }
+</style>
+</head>
+<body>
+<main id="view"></main>
+<nav id="tabs" hidden><div class="in">
+  <button data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c-1-8 4-13 14-14 0 9-5 15-14 14zM5 19l7-7"/></svg>Today</button>
+  <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>History</button>
+  <button data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M5 15l4-4 4 3 6-7"/></svg>Progress</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</button>
+</div></nav>
+<div id="sheet" hidden><div class="scrim" data-act="close"></div><div id="sheetBox"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script>
+/* Steady — everything is stored in localStorage on this device.
+ * Data: settings (units + weekly goals), workouts (`kind` is pt | pilates | cardio | timed, sorted by `at`; `slot` is
+ * pt/move when started from today's plan), weights (one per day), checkins (comfort 1–5, one per day).
+ * A guided walk in progress lives only in memory (P). */
+const KEY = 'steady-v1';
+const EMBODIA = 'https://app.embodia.com';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const ymd = (d = new Date()) => { d = new Date(d); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` };
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) };
+const monday = d => { d = new Date(d); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d };
+const weekKey = d => ymd(monday(d));
+const fmtDate = s => parseYmd(s).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+const shortDate = t => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null };
+const r1 = n => Math.round(n * 10) / 10;
+const mmss = s => `${Math.floor(s / 60)}:${pad(s % 60)}`;
+const distUnit = () => D.settings.unit === 'kg' ? 'km' : 'mi';
+
+/* ---------- the program ----------
+ * Physio every day (the exercises themselves live in Embodia; this app just records that they got done), Pilates
+ * two or three times a week, and low-impact cardio on the other days. Nothing here involves jumping, running or lifting. */
+const SESSIONS = {
+  pt: { kind: 'log', preset: 'PT exercises (Embodia)', icon: '🩺', name: 'PT exercises', sub: 'Your Embodia program', min: 15, link: EMBODIA, cta: 'Mark as done',
+    about: ['Open Embodia and do today’s exercises', 'Breathe out on the effort, don’t hold your breath', 'Come back here and mark it done'] },
+  pilates: { kind: 'log', preset: 'Pilates', icon: '🧘', name: 'Pilates', sub: 'Class, reformer or mat at home', min: 45, cta: 'Log Pilates',
+    about: ['Tell your instructor about your PT plan', 'Skip or modify anything your PT has flagged', 'Log it here when you’re done'] },
+  walk: { kind: 'timed', icon: '🚶', name: 'Easy walk', sub: 'Steady and conversational', cta: 'Start',
+    about: ['5 min easy warm-up', '20 min steady — you can still chat', '5 min easy cool-down'],
+    steps: [{ n: 'Easy pace — warm up', s: 300, t: 'Loosen up. Stand tall and breathe normally.' },
+            { n: 'Steady walk — first half', s: 600, t: 'A pace where you could still hold a conversation. If you feel more discomfort, slow down.' },
+            { n: 'Steady walk — second half', s: 600, t: 'Keep it comfortable. This is meant to feel easy.' },
+            { n: 'Easy pace — cool down', s: 300, t: 'Slow right down and let your breathing settle.' }] },
+  cardio: { kind: 'log', preset: 'Stationary bike', icon: '🚴', name: 'Other light cardio', sub: 'Bike, swim, water walking, elliptical', min: 20, cta: 'Log it',
+    about: ['Low impact, no jumping or running', 'Keep it easy enough to chat', 'Ease off if discomfort builds'] }
+};
+const PT = 'pt';
+// the movement slot by weekday, Sunday first; null = rest
+const SCHEDULE = [null, 'pilates', 'walk', 'pilates', 'walk', 'pilates', 'walk'];
+const SLOT = { pt: '🩺 Physio', move: '🌿 Movement' };
+const ACTIVITIES = ['PT exercises (Embodia)', 'Pilates', 'Walk', 'Stationary bike', 'Swim', 'Water walking', 'Elliptical', 'Easy hike', 'Other'];
+const ACT_ICON = { 'PT exercises (Embodia)': '🩺', Pilates: '🧘', Walk: '🚶', 'Stationary bike': '🚴', Swim: '🏊', 'Water walking': '💧', Elliptical: '🌀', 'Easy hike': '🥾' };
+const DEFAULT_MIN = { 'PT exercises (Embodia)': 15, Pilates: 45 };
+const kindOf = a => a === ACTIVITIES[0] ? 'pt' : a === 'Pilates' ? 'pilates' : 'cardio';
+const catOf = w => w.kind === 'pt' || w.kind === 'pilates' ? w.kind : 'cardio';   // guided walks count as cardio
+const FEEL = [['😌', 'None'], ['🙂', 'Slight'], ['😐', 'Noticeable'], ['😣', 'Strong'], ['😖', 'Painful']];
+const TIPS = [
+  'A little physio every day beats a lot once in a while. Consistency is what moves things along.',
+  'Tell your Pilates instructor about your PT plan up front, and ask your PT which moves to skip or modify.',
+  'Breathe out on the effort instead of holding your breath. Your PT can show you how for each exercise.',
+  'Walking is a great base. An easy pace where you can still chat is exactly right.',
+  'The check-in shows patterns over weeks, not just today. Show the Progress screen to your PT.',
+  'Notice how you feel later in the day, not just during exercise. Discomfort sometimes shows up in the evening.',
+  'Rest days are part of the plan. Your body does the repair work between sessions.',
+  'Short on time? A few minutes of your PT exercises still counts.'
+];
+const minsOf = s => s.kind === 'timed' ? Math.round(s.steps.reduce((n, x) => n + x.s, 0) / 60) : s.min;
+
+/* ---------- storage ---------- */
+const defaults = () => ({ onboarded: false, settings: { unit: 'lb', goalPt: 7, goalPilates: 2, goalCardio: 2 }, workouts: [], weights: [], checkins: [] });
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.workouts)) { const base = defaults(); return { ...base, ...d, settings: { ...base.settings, ...d.settings } } }
+  } catch (e) {}
+  return defaults();
+}
+let D = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(D)) } catch (e) { toast('Could not save — is storage full?') } }
+function addWorkout(w) { D.workouts.push(w); D.workouts.sort((a, b) => a.at - b.at) }
+function byDate(list, date, entry) { const out = list.filter(x => x.date !== date); out.push(entry); return out.sort((a, b) => a.date < b.date ? -1 : 1) }
+
+/* ---------- stats ---------- */
+function weekCounts() {
+  const m = {};
+  for (const w of D.workouts) { const k = weekKey(parseYmd(w.date)); m[k] = (m[k] || 0) + 1 }
+  return m;
+}
+// PT counts days (doing it twice in a day is still one day); Pilates and cardio count sessions
+function weekStats(start = monday(new Date())) {
+  const k = ymd(start), ptDays = new Set(), out = { pt: 0, pilates: 0, cardio: 0 };
+  for (const w of D.workouts) {
+    if (weekKey(parseYmd(w.date)) !== k) continue;
+    const c = catOf(w);
+    if (c === 'pt') ptDays.add(w.date); else out[c]++;
+  }
+  out.pt = ptDays.size;
+  return out;
+}
+function goalsMet(ws) { const s = D.settings; return ws.pt >= s.goalPt && ws.pilates >= s.goalPilates && ws.cardio >= s.goalCardio }
+function ptStreak() {
+  const days = new Set(D.workouts.filter(w => catOf(w) === 'pt').map(w => w.date));
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (!days.has(ymd(d))) d.setDate(d.getDate() - 1);   // today isn't over yet, so it can't break the streak
+  let n = 0;
+  while (days.has(ymd(d))) { n++; d.setDate(d.getDate() - 1) }
+  return n;
+}
+const minutes = w => w.minutes || 0;
+
+/* ---------- UI helpers ---------- */
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600) }
+function sheet(html) { $('#sheetBox').innerHTML = html; $('#sheet').hidden = false; const f = $('#sheetBox input:not([type=date])'); if (f && matchMedia('(hover: hover)').matches) f.focus() }
+function closeSheet() { $('#sheet').hidden = true; $('#sheetBox').innerHTML = '' }
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' };
+const tipOfDay = () => TIPS[Math.floor(Date.now() / 864e5) % TIPS.length];
+
+let tab = 'today';
+function go(t) { tab = t; render(); window.scrollTo(0, 0) }
+function render() {
+  const v = $('#view');
+  $('#tabs').hidden = !D.onboarded;
+  if (!D.onboarded) { v.innerHTML = onboardHTML(); return }
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (tab === 'today' && P) v.innerHTML = playerHTML();
+  else v.innerHTML = { today: todayHTML, history: historyHTML, progress: progressHTML, settings: settingsHTML }[tab]();
+}
+
+/* ---------- sound, vibration, screen on ---------- */
+let actx = null, wake = null;
+function initAudio() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume() } catch (e) {} }
+function beep(freq = 880, dur = 0.4) {
+  try {
+    if (!actx) return;
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.frequency.value = freq; g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const vibrate = p => { try { navigator.vibrate && navigator.vibrate(p) } catch (e) {} };
+async function keepAwake() { try { if ('wakeLock' in navigator && !wake) { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null) } } catch (e) {} }
+function letSleep() { try { wake && wake.release() } catch (e) {} wake = null }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && P) keepAwake() });
+
+/* ---------- onboarding ---------- */
+function onboardHTML() {
+  const sel = (id, opts, cur) => `<select id="${id}">${opts.map(n => `<option ${n === cur ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+  return `<div class="onboard">
+    <img class="logo" src="icons/icon.svg" alt="">
+    <h1>Steady does it</h1>
+    <p class="muted">Daily physio, Pilates a couple of times a week and gentle cardio, all in one place. Do your exercises in Embodia; Steady keeps track, keeps your streak going and shows how you’re feeling over time.</p>
+    <section class="card">
+      <label class="field" style="margin-top:0">Physio days per week${sel('obPt', [3, 4, 5, 6, 7], 7)}</label>
+      <label class="field">Pilates sessions per week${sel('obPilates', [1, 2, 3, 4], 2)}</label>
+      <label class="field">Light cardio sessions per week${sel('obCardio', [1, 2, 3, 4, 5], 2)}</label>
+      <label class="field">Units<select id="obUnit"><option value="lb">Pounds & miles</option><option value="kg">Kilograms & km</option></select></label>
+      <label class="field">Current body weight (optional)<input id="obWeight" inputmode="decimal" placeholder="e.g. 140"></label>
+    </section>
+    <button class="primary wide" data-act="onboard">Get started</button>
+  </div>`;
+}
+
+/* ---------- today ---------- */
+function slotCard(slot, sid) {
+  const label = SLOT[slot];
+  if (!sid) return `<section class="card"><p class="eyebrow">${label}</p><h2>Rest day</h2><p class="muted small">Rest is part of the plan. A gentle stroll is fine if you feel like it.</p><button class="link" data-act="swap" data-slot="${slot}">Move anyway</button></section>`;
+  const s = SESSIONS[sid], done = D.workouts.some(w => w.date === ymd() && w.slot === slot);
+  return `<section class="card slot ${done ? 'isdone' : ''}">
+    <div class="exhead"><p class="eyebrow">${label} · ~${minsOf(s)} min</p>${done ? '<span class="donetag">✓ Done</span>' : ''}</div>
+    <h2>${s.icon} ${esc(s.name)}</h2><p class="muted small">${esc(s.sub)}</p>
+    <ul class="plan">${s.about.map(a => `<li><span>${esc(a)}</span></li>`).join('')}</ul>
+    ${s.link && !done ? `<a class="btn ghost wide" href="${s.link}" target="_blank" rel="noopener">Open Embodia ↗</a>` : ''}
+    ${done ? '' : `<button class="primary wide" data-act="begin" data-sid="${sid}" data-slot="${slot}">${s.cta}</button>`}
+    ${slot === 'move' ? `<button class="link" data-act="swap" data-slot="${slot}">${done ? 'Do another session' : 'Swap for another session'}</button>` : ''}
+  </section>`;
+}
+function goalRow(label, n, goal) {
+  const dots = Array.from({ length: Math.max(goal, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
+  return `<div class="goal"><span>${label}</span><div class="dots">${dots}</div><b>${n}<span class="muted">/${goal}</span></b></div>`;
+}
+function todayHTML() {
+  const s = D.settings, ws = weekStats(), streak = ptStreak(), ck = D.checkins.find(c => c.date === ymd());
+  const ptDone = D.workouts.some(w => w.date === ymd() && w.slot === 'pt');
+  const cards = [slotCard('pt', PT), slotCard('move', SCHEDULE[new Date().getDay()])];
+  if (ptDone) cards.reverse();
+  return `<header class="top"><div><p class="muted">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>${greeting()}</h1></div></header>
+  ${goalsMet(ws) ? '<div class="banner">🏆 All your goals for the week are done. Lovely work.</div>' : ''}
+  <section class="card">
+    <div class="exhead"><h2>This week</h2><span class="chip">🌱 ${streak}-day physio streak</span></div>
+    ${goalRow('Physio', ws.pt, s.goalPt)}${goalRow('Pilates', ws.pilates, s.goalPilates)}${goalRow('Cardio', ws.cardio, s.goalCardio)}
+  </section>
+  ${cards.join('')}
+  <div class="two">
+    <button class="tile" data-act="checkinNow"><b>💬 Check in</b><span class="muted small">${ck ? `today: ${FEEL[ck.v - 1][1].toLowerCase()}` : 'comfort'}</span></button>
+    <button class="tile" data-act="activity"><b>📝 Log activity</b><span class="muted small">PT, Pilates, cardio…</span></button>
+  </div>
+  <section class="card"><p class="eyebrow">Tip</p><p>${tipOfDay()}</p></section>`;
+}
+function swapSheet(slot) {
+  sheet(`<h2>Pick a session</h2>
+    ${Object.entries(SESSIONS).filter(([id]) => id !== PT).map(([id, s]) => `<button class="pick" data-act="begin" data-sid="${id}" data-slot="${slot}"><b>${s.icon} ${esc(s.name)} <span class="muted small">· ~${minsOf(s)} min</span></b><span class="muted small">${esc(s.sub)}</span></button>`).join('')}
+    <div class="row end"><button class="ghost" data-act="close">Cancel</button></div>`);
+}
+function begin(sid, slot) {
+  closeSheet();
+  if (P) { toast('End your current walk first'); go('today'); return }
+  const s = SESSIONS[sid];
+  if (s.kind === 'timed') startTimed(sid, slot); else activitySheet(slot, s.preset);
+}
+function weekLine() {
+  const ws = weekStats(), s = D.settings;
+  return `Physio ${ws.pt}/${s.goalPt} · Pilates ${ws.pilates}/${s.goalPilates} · Cardio ${ws.cardio}/${s.goalCardio}`;
+}
+function celebrate(line) {
+  sheet(`<div class="celebrate"><div class="emoji">${goalsMet(weekStats()) ? '🏆' : '🌿'}</div><h2>${goalsMet(weekStats()) ? 'Week complete!' : 'Done!'}</h2>
+    <p class="muted">${esc(line)}</p><p class="muted small">This week: ${weekLine()}</p>
+    <button class="primary wide" data-act="close">Nice</button></div>`);
+}
+// after a session: ask how she feels (once a day), otherwise just celebrate
+function afterSession(line) {
+  if (D.checkins.some(c => c.date === ymd())) celebrate(line); else checkinSheet(true, line);
+}
+
+/* ---------- guided walk ---------- */
+let P = null, pTick = null;
+function startTimed(sid, slot) {
+  initAudio();
+  const steps = SESSIONS[sid].steps;
+  P = { sid, slot, steps, i: 0, at: Date.now(), end: Date.now() + steps[0].s * 1000, paused: false, left: 0, lastBeep: null };
+  clearInterval(pTick); pTick = setInterval(tickTimed, 200);
+  keepAwake(); beep(880, 0.3); go('today');
+}
+const stepLeft = () => P.paused ? Math.ceil(P.left / 1000) : Math.max(0, Math.ceil((P.end - Date.now()) / 1000));
+const totalLeft = () => stepLeft() + P.steps.slice(P.i + 1).reduce((n, x) => n + x.s, 0);
+function tickTimed() {
+  if (!P || P.paused) return;
+  const left = stepLeft();
+  if (left <= 0) { stepTo(P.i + 1); return }
+  if (left <= 3 && P.lastBeep !== left) { P.lastBeep = left; beep(520, 0.12) }
+  const st = P.steps[P.i], t = $('#pTime'), bar = $('#pBar'), all = $('#pLeft');
+  if (t) t.textContent = mmss(left);
+  if (bar) bar.style.width = `${100 * (st.s - left) / st.s}%`;
+  if (all) all.textContent = mmss(totalLeft());
+}
+function stepTo(i) {
+  if (i >= P.steps.length) { finishTimed(true); return }
+  P.i = Math.max(0, i); P.end = Date.now() + P.steps[P.i].s * 1000; P.paused = false; P.lastBeep = null;
+  beep(880, 0.35); vibrate(200);
+  if (tab === 'today') render();
+}
+function playerHTML() {
+  const s = SESSIONS[P.sid], st = P.steps[P.i], next = P.steps[P.i + 1], left = stepLeft();
+  return `<header class="top"><div><p class="eyebrow">${s.icon} ${esc(s.name)}</p><p class="bigclock"><b id="pLeft">${mmss(totalLeft())}</b> <span>left · step ${P.i + 1} of ${P.steps.length}</span></p></div><button class="ghost small" data-act="pquit">End</button></header>
+  <section class="card player">
+    <h1 class="pstep">${esc(st.n)}</h1>
+    <p class="ptime" id="pTime">${mmss(left)}</p>
+    <div class="pbar"><i id="pBar" style="width:${100 * (st.s - left) / st.s}%"></i></div>
+    ${st.t ? `<p class="muted">${esc(st.t)}</p>` : ''}
+    <p class="muted small">${next ? `Next: ${esc(next.n)}` : 'Last one!'}</p>
+    <div class="pctl"><button data-act="pprev" aria-label="Previous step">⏮</button><button class="primary" data-act="ppause">${P.paused ? '▶ Resume' : '❚❚ Pause'}</button><button data-act="pnext" aria-label="Next step">⏭</button></div>
+  </section>
+  <ol class="steps">${P.steps.map((x, i) => `<li class="${i < P.i ? 'past' : i === P.i ? 'cur' : ''}"><span>${esc(x.n)}</span><span>${mmss(x.s)}</span></li>`).join('')}</ol>`;
+}
+function finishTimed(complete) {
+  clearInterval(pTick); pTick = null; letSleep();
+  const p = P; P = null;
+  const mins = Math.round((Date.now() - p.at) / 60000);
+  if (!complete && mins < 1) { render(); toast('Walk ended'); return }
+  addWorkout({ id: uid(), kind: 'timed', session: p.sid, slot: p.slot, at: p.at, end: Date.now(), date: ymd(p.at), minutes: Math.max(1, mins), complete });
+  save(); tab = 'today'; render();
+  beep(1046, 0.6); afterSession(`${Math.max(1, mins)} min walk`);
+}
+
+/* ---------- check-in ---------- */
+function checkinSheet(after, line) {
+  sheet(`<div class="celebrate">${after ?`<div class="emoji">🌿</div><h2>Done!</h2>${line ? `<p class="muted">${esc(line)}</p>` : ''}` : ''}
+    <p>Any discomfort today?</p>
+    <div class="feel">${FEEL.map(([e, l], i) => `<button data-act="checkin" data-v="${i + 1}"><b>${e}</b>${l}</button>`).join('')}</div>
+    <button class="link" data-act="close">Skip</button></div>`);
+}
+
+/* ---------- activities & weight ---------- */
+function activitySheet(slot, preset = ACTIVITIES[0]) {
+  sheet(`<h2>Log activity</h2>
+    <label class="field">Activity<select id="cKind">${ACTIVITIES.map(k => `<option ${k === preset ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select></label>
+    <div class="two" style="margin-top:12px"><label class="field">Minutes<input id="cMin" inputmode="numeric" value="${DEFAULT_MIN[preset] || 20}" data-auto="1"></label>
+    <label class="field" id="cDistWrap" ${kindOf(preset) === 'cardio' ? '' : 'hidden'}>Distance (${distUnit()})<input id="cDist" inputmode="decimal" placeholder="optional"></label></div>
+    <label class="field">Date<input id="cDate" type="date" value="${ymd()}" max="${ymd()}"></label>
+    <div class="row end"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="saveActivity" data-slot="${slot || ''}">Save</button></div>`);
+}
+function weightSheet() {
+  const lw = D.weights.at(-1);
+  sheet(`<h2>Log body weight</h2>
+    <label class="field">Weight (${D.settings.unit})<input id="wVal" inputmode="decimal" placeholder="${lw ? lw.v : ''}"></label>
+    <label class="field">Date<input id="wDate" type="date" value="${ymd()}" max="${ymd()}"></label>
+    <div class="row end"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="saveWeight">Save</button></div>`);
+}
+const atFor = date => date === ymd() ? Date.now() : parseYmd(date).getTime() + 12 * 36e5;
+
+/* ---------- history ---------- */
+function workoutTitle(w) {
+  if (w.kind === 'timed') { const s = SESSIONS[w.session]; return s ? `${s.icon} ${esc(s.name)}` : '🚶 Walk' }
+  return `${ACT_ICON[w.activity] || '⏱️'} ${esc(w.activity)}`;
+}
+function workoutSummary(w) {
+  const dist = w.distance ? ` · ${w.distance} ${distUnit()}` : '';
+  return `${w.minutes} min${dist}${w.complete === false ? ' · ended early' : ''}`;
+}
+function historyHTML() {
+  if (!D.workouts.length) return `<header class="top"><h1>History</h1></header><div class="card empty"><p>Nothing logged yet.</p><p class="muted small" style="margin-top:6px">Log your first session and it shows up here.</p></div>`;
+  let out = `<header class="top"><h1>History</h1><p class="muted">${D.workouts.length} total</p></header>`, lastWeek = null;
+  const counts = weekCounts();
+  for (const w of [...D.workouts].reverse()) {
+    const wk = weekKey(parseYmd(w.date));
+    if (wk !== lastWeek) { lastWeek = wk; out += `<p class="weekhead">Week of ${shortDate(parseYmd(wk))} · ${counts[wk]} logged</p>` }
+    out += `<details class="card"><summary><div><b>${workoutTitle(w)}</b><span class="muted small">${fmtDate(w.date)} · ${workoutSummary(w)}</span></div></summary>
+      <div class="row end"><button class="danger small" data-act="delw" data-id="${esc(w.id)}">Delete</button></div></details>`;
+  }
+  return out;
+}
+
+/* ---------- progress ---------- */
+function lineChart(pts, label, fixed) {
+  if (pts.length < 2) return `<p class="muted small empty">Log at least two entries to see a trend.</p>`;
+  const W = 320, H = 150, L = 36, R = 10, T = 10, B = 22;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs) === x0 ? x0 + 1 : Math.max(...xs);
+  const lo = fixed ? fixed[0] : Math.min(...ys), hi = fixed ? fixed[1] : Math.max(...ys);
+  const padY = (hi - lo) * 0.2 || Math.max(1, hi * 0.05), y0 = lo - padY, y1 = hi + padY;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R), Y = y => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('');
+  const area = `${line}L${X(pts.at(-1).x).toFixed(1)},${H - B}L${X(pts[0].x).toFixed(1)},${H - B}Z`;
+  const ticks = fixed ? [fixed[0], (fixed[0] + fixed[1]) / 2, fixed[1]] : [lo, (lo + hi) / 2, hi];
+  const grid = ticks.filter((v, i, a) => a.indexOf(v) === i).map(v =>
+    `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)" stroke-dasharray="3 3"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${r1(v)}</text>`).join('');
+  const last = pts.at(-1);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${grid}
+    <path d="${area}" fill="var(--accent)" opacity=".12"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.length <= 30 ? pts.map(p => `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="2.5" fill="var(--accent)"/>`).join('') : ''}
+    <circle cx="${X(last.x).toFixed(1)}" cy="${Y(last.y).toFixed(1)}" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/>
+    <text x="${L}" y="${H - 6}">${shortDate(pts[0].x)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${shortDate(last.x)}</text></svg>`;
+}
+function barChart(vals, labels, goal, label) {
+  const W = 320, H = 130, T = 14, B = 20, n = vals.length, gap = 8, bw = (W - gap * (n - 1)) / n;
+  const max = Math.max(goal, ...vals, 1), Y = v => T + (1 - v / max) * (H - T - B);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
+    ${vals.map((v, i) => { const x = i * (bw + gap); return `<rect x="${x.toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - B - Y(v)).toFixed(1)}" rx="4" fill="var(--accent)" opacity="${v >= goal ? 1 : 0.35}"/>
+      ${v ? `<text x="${(x + bw / 2).toFixed(1)}" y="${(Y(v) - 4).toFixed(1)}" text-anchor="middle">${v}</text>` : ''}<text x="${(x + bw / 2).toFixed(1)}" y="${H - 5}" text-anchor="middle">${labels[i]}</text>` }).join('')}
+    <line x1="0" x2="${W}" y1="${Y(goal).toFixed(1)}" y2="${Y(goal).toFixed(1)}" stroke="var(--accent)" stroke-dasharray="4 4" opacity=".6"/></svg>`;
+}
+function progressHTML() {
+  const s = D.settings, month = ymd().slice(0, 7), thisMonth = D.workouts.filter(w => w.date.startsWith(month));
+  const ws = D.weights, change = ws.length > 1 ? r1(ws.at(-1).v - ws[0].v) : null, ck = D.checkins;
+  const weeks = Array.from({ length: 8 }, (_, i) => { const d = monday(new Date()); d.setDate(d.getDate() - 7 * (7 - i)); return weekStats(d) });
+  const labels = Array.from({ length: 8 }, (_, i) => { const d = monday(new Date()); d.setDate(d.getDate() - 7 * (7 - i)); return `${d.getMonth() + 1}/${d.getDate()}` });
+  const ptDaysMonth = new Set(thisMonth.filter(w => catOf(w) === 'pt').map(w => w.date)).size;
+  return `<header class="top"><h1>Progress</h1></header>
+  <div class="tiles">
+    <div class="stat"><b>${ptStreak()}</b><span class="muted small">day physio streak</span></div>
+    <div class="stat"><b>${ptDaysMonth}</b><span class="muted small">physio days this month</span></div>
+    <div class="stat"><b>${thisMonth.filter(w => catOf(w) === 'pilates').length}</b><span class="muted small">Pilates this month</span></div>
+    <div class="stat"><b>${thisMonth.filter(w => catOf(w) === 'cardio').reduce((n, w) => n + minutes(w), 0)}</b><span class="muted small">cardio minutes this month</span></div>
+  </div>
+  <section class="card">
+    <div class="exhead"><h2>Comfort</h2><span class="muted small">${ck.length ? `latest: ${FEEL[ck.at(-1).v - 1][1].toLowerCase()}` : ''}</span></div>
+    <p class="muted small">1 = none, 5 = painful. Lower is better. Worth showing to your PT.</p>
+    ${ck.length ? lineChart(ck.map(c => ({ x: parseYmd(c.date).getTime(), y: c.v })), 'Discomfort over time', [1, 5]) : '<p class="muted small empty">You’ll be asked after each session, or tap Check in on the Today screen.</p>'}
+    <button class="ghost wide" data-act="checkinNow">Check in now</button>
+  </section>
+  <section class="card">
+    <div class="exhead"><h2>Physio days per week</h2><span class="muted small">goal ${s.goalPt}</span></div>
+    ${barChart(weeks.map(w => w.pt), labels, s.goalPt, 'Physio days per week')}
+  </section>
+  <section class="card">
+    <div class="exhead"><h2>Pilates & cardio per week</h2><span class="muted small">goal ${s.goalPilates + s.goalCardio}</span></div>
+    ${barChart(weeks.map(w => w.pilates + w.cardio), labels, s.goalPilates + s.goalCardio, 'Pilates and cardio sessions per week')}
+  </section>
+  <section class="card">
+    <div class="exhead"><h2>Body weight</h2><span class="muted small">${ws.length ? `${ws.at(-1).v} ${s.unit}${change !== null ? ` · ${change > 0 ? '+' : ''}${change} since start` : ''}` : ''}</span></div>
+    ${ws.length ? lineChart(ws.map(w => ({ x: parseYmd(w.date).getTime(), y: w.v })), 'Body weight over time') : '<p class="muted small empty">No weigh-ins yet. Totally optional.</p>'}
+    ${ws.length ? `<ul class="entries">${ws.slice(-5).reverse().map(w => `<li><span>${fmtDate(w.date)}</span><span>${w.v} ${s.unit}<button class="x" data-act="delweight" data-date="${w.date}" aria-label="Delete">×</button></span></li>`).join('')}</ul>` : ''}
+    <button class="ghost wide" data-act="weight">Log weight</button>
+  </section>`;
+}
+
+/* ---------- settings ---------- */
+function settingsHTML() {
+  const s = D.settings, opt = (v, t, cur) => `<option value="${v}" ${String(v) === String(cur) ? 'selected' : ''}>${t}</option>`;
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], order = [1, 2, 3, 4, 5, 6, 0];
+  const nm = id => id ? `${SESSIONS[id].icon} ${esc(SESSIONS[id].name)}` : '<span class="muted">Rest</span>';
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'} a week`;
+  return `<header class="top"><h1>Settings</h1></header>
+  <section class="card">
+    <label class="field" style="margin-top:0">Physio days<select data-set="goalPt">${[3, 4, 5, 6, 7].map(n => opt(n, `${n} days a week`, s.goalPt)).join('')}</select></label>
+    <label class="field">Pilates<select data-set="goalPilates">${[1, 2, 3, 4].map(n => opt(n, plural(n, 'session'), s.goalPilates)).join('')}</select></label>
+    <label class="field">Light cardio<select data-set="goalCardio">${[1, 2, 3, 4, 5].map(n => opt(n, plural(n, 'session'), s.goalCardio)).join('')}</select></label>
+    <label class="field">Units<select data-set="unit">${opt('lb', 'Pounds & miles', s.unit)}${opt('kg', 'Kilograms & km', s.unit)}</select></label>
+  </section>
+  <section class="card">
+    <h2>Your week</h2>
+    <table class="sched">${order.map(d => `<tr><td>${days[d]}</td><td>🩺 ${esc(SESSIONS.pt.name)}<br>${nm(SCHEDULE[d])}</td></tr>`).join('')}</table>
+    <p class="muted small">Pilates on Mon, Wed and Fri, walks on Tue, Thu and Sat. If your goal is two Pilates sessions, the third is a bonus. Any session can be swapped from the Today screen.</p>
+  </section>
+  <section class="card">
+    <h2>How it works</h2>
+    <p class="muted small"><b>Physio</b> happens in Embodia. Do your exercises there, then tap <i>Mark as done</i> here to keep your streak. Steady doesn’t replace your PT’s program.</p>
+    <p class="muted small"><b>Pilates</b> two or three times a week. Tell your instructor about your PT plan, and ask your PT which exercises to skip or modify.</p>
+    <p class="muted small"><b>Light cardio</b> means low-impact options: walking, stationary bike, swimming, water walking or the elliptical, with no jumping or running. Keep a pace where you can chat, and ease off if you notice more discomfort. Ask your PT what’s right at each stage.</p>
+    <p class="muted small"><b>Check-ins</b> record how comfortable you feel so you and your PT can see how things trend as you exercise.</p>
+    <p class="muted small">Steady is a tracker, not medical advice. If symptoms get worse or you have pain, let your PT know.</p>
+  </section>
+  <section class="card">
+    <h2>Your data</h2>
+    <p class="muted small">Everything is saved on this phone only. Export a backup now and then, especially before switching phones.</p>
+    <div class="row"><button data-act="export">Export backup</button><button data-act="import">Import backup</button></div>
+    <button class="danger wide" data-act="erase">Erase everything</button>
+  </section>`;
+}
+function convertUnits(to) {
+  const k = to === 'kg' ? 1 / 2.20462 : 2.20462, km = to === 'kg' ? 1.60934 : 1 / 1.60934;
+  D.weights.forEach(w => w.v = r1(w.v * k));
+  for (const w of D.workouts) if (w.distance) w.distance = r1(w.distance * km);
+}
+async function exportData() {
+  const name = `steady-backup-${ymd()}.json`, blob = new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' });
+  const file = new File([blob], name, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer: coarse)').matches) {
+    try { await navigator.share({ files: [file], title: 'Steady backup' }); return } catch (e) { if (e.name === 'AbortError') return }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- events ---------- */
+const actions = {
+  onboard() {
+    const w = num($('#obWeight').value);
+    D.settings = { ...D.settings, unit: $('#obUnit').value, goalPt: +$('#obPt').value, goalPilates: +$('#obPilates').value, goalCardio: +$('#obCardio').value };
+    if (w && w > 0) D.weights = byDate(D.weights, ymd(), { date: ymd(), v: r1(w) });
+    D.onboarded = true; save(); go('today');
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist() } catch (e) {}
+  },
+  begin(el) { begin(el.dataset.sid, el.dataset.slot || null) },
+  swap(el) { swapSheet(el.dataset.slot) },
+  ppause() {
+    if (P.paused) { P.end = Date.now() + P.left; P.paused = false; keepAwake() } else { P.left = P.end - Date.now(); P.paused = true }
+    render();
+  },
+  pnext() { stepTo(P.i + 1) },
+  pprev() { stepTo(stepLeft() < P.steps[P.i].s - 3 ? P.i : P.i - 1) },
+  pquit() { if (confirm('End this walk now? The time you did still counts.')) finishTimed(false) },
+  checkin(el) { D.checkins = byDate(D.checkins, ymd(), { date: ymd(), v: +el.dataset.v }); save(); closeSheet(); render(); toast(+el.dataset.v >= 4 ? 'Noted. Take it easy today, and tell your PT if it keeps up' : 'Noted 👍') },
+  checkinNow() { checkinSheet(false) },
+  activity() { activitySheet(null) },
+  saveActivity(el) {
+    const act = $('#cKind').value, kind = kindOf(act), mins = parseInt($('#cMin').value), date = $('#cDate').value || ymd(), dist = num($('#cDist').value);
+    if (!(mins > 0)) { toast('Enter how many minutes'); return }
+    addWorkout({ id: uid(), kind, at: atFor(date), date, slot: date === ymd() && el.dataset.slot || null, activity: act, minutes: mins, distance: kind === 'cardio' && dist > 0 ? r1(dist) : null });
+    save(); closeSheet(); render();
+    if (date === ymd()) afterSession(`${mins} min · ${act}`); else toast('Logged 👍');
+  },
+  weight() { weightSheet() },
+  saveWeight() {
+    const v = num($('#wVal').value), date = $('#wDate').value || ymd();
+    if (!(v > 0)) { toast('Enter your weight'); return }
+    D.weights = byDate(D.weights, date, { date, v: r1(v) }); save(); closeSheet(); render(); toast('Weight logged');
+  },
+  delweight(el) { if (confirm('Delete this weigh-in?')) { D.weights = D.weights.filter(w => w.date !== el.dataset.date); save(); render() } },
+  delw(el) { if (confirm('Delete this entry?')) { D.workouts = D.workouts.filter(w => w.id !== el.dataset.id); save(); render() } },
+  close() { closeSheet() },
+  export() { exportData() },
+  import() { $('#importFile').click() },
+  erase() {
+    if (!confirm('Erase all sessions, check-ins, weigh-ins and settings from this phone? This cannot be undone.')) return;
+    localStorage.removeItem(KEY); D = defaults(); if (P) { clearInterval(pTick); P = null } letSleep(); tab = 'today'; render();
+  }
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t) { go(t.dataset.tab); return }
+  const a = e.target.closest('[data-act]'); if (a && actions[a.dataset.act]) actions[a.dataset.act](a);
+});
+document.addEventListener('input', e => { if (e.target.id === 'cMin') delete e.target.dataset.auto });
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'cKind') {   // distance only applies to cardio; swap in a sensible default length until she types her own
+    $('#cDistWrap').hidden = kindOf(el.value) !== 'cardio';
+    const m = $('#cMin'); if (m.dataset.auto) m.value = DEFAULT_MIN[el.value] || 20;
+    return;
+  }
+  if (el.id === 'importFile' && el.files[0]) {
+    el.files[0].text().then(txt => {
+      const d = JSON.parse(txt);
+      if (!d || !Array.isArray(d.workouts) || !Array.isArray(d.weights)) throw new Error('bad file');
+      if (!confirm(`Replace everything on this phone with this backup (${d.workouts.length} sessions, ${d.weights.length} weigh-ins)?`)) return;
+      const base = defaults(); D = { ...base, ...d, settings: { ...base.settings, ...d.settings }, onboarded: true };
+      save(); tab = 'today'; render(); toast('Backup restored');
+    }).catch(() => toast("That file isn't a Steady backup")).finally(() => el.value = '');
+    return;
+  }
+  const k = el.dataset.set; if (!k) return;
+  const v = k === 'unit' ? el.value : +el.value;
+  if (k === 'unit' && v !== D.settings.unit) convertUnits(v);
+  D.settings[k] = v; save(); render(); toast('Saved');
+});
+// close sheets with Escape on desktop
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet() });
+
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
